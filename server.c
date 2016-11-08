@@ -1,3 +1,6 @@
+#include <signal.h>
+#include <stdio.h>
+#include <errno.h>
 #include <h2o.h>
 
 
@@ -108,8 +111,8 @@ static int create_listener(unsigned short port)
 
 static int setup_ssl(const char *ssl_dir, const char **err)
 {
-    char *cert_file = NULL;
-    char *key_file = NULL;
+    char cert_file[PATH_MAX];
+    char key_file[PATH_MAX];
 
     SSL_load_error_strings();
     SSL_library_init();
@@ -120,8 +123,8 @@ static int setup_ssl(const char *ssl_dir, const char **err)
 
 #define CERT_FILE "server.crt"
 #define KEY_FILE "server.key"
-    asprintf(&cert_file, "%s/%s", ssl_dir, CERT_FILE);
-    asprintf(&key_file, "%s/%s", ssl_dir, KEY_FILE);
+    sprintf(cert_file, "%s/%s", ssl_dir, CERT_FILE);
+    sprintf(key_file, "%s/%s", ssl_dir, KEY_FILE);
     /* load certificate and private key */
     if (SSL_CTX_use_certificate_file(accept_ctx.ssl_ctx, cert_file, SSL_FILETYPE_PEM) != 1) {
         *err = "an error occurred while trying to load server certificate file " CERT_FILE "\n";
