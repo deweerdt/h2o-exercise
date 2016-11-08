@@ -42,14 +42,14 @@ static void on_accept(uv_stream_t *listener, int status)
   h2o_accept(&accept_ctx, sock);
 }
 
-static int create_listener(void)
+static int create_listener(unsigned short port)
 {
   static uv_tcp_t listener;
   struct sockaddr_in addr;
   int r;
 
   uv_tcp_init(ctx.loop, &listener);
-  uv_ip4_addr("127.0.0.1", 7890, &addr);
+  uv_ip4_addr("127.0.0.1", port, &addr);
   if ((r = uv_tcp_bind(&listener, (struct sockaddr *)&addr, 0)) != 0) {
     fprintf(stderr, "uv_tcp_bind:%s\n", uv_strerror(r));
     goto Error;
@@ -81,7 +81,7 @@ static void on_accept(h2o_socket_t *listener, const char *err)
   h2o_accept(&accept_ctx, sock);
 }
 
-static int create_listener(void)
+static int create_listener(unsigned short port)
 {
   struct sockaddr_in addr;
   int fd, reuseaddr_flag = 1;
@@ -90,7 +90,7 @@ static int create_listener(void)
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = htonl(0x7f000001);
-  addr.sin_port = htons(7890);
+  addr.sin_port = htons(port);
 
   if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ||
       setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr_flag, sizeof(reuseaddr_flag)) != 0 ||
@@ -106,10 +106,55 @@ static int create_listener(void)
 
 #endif
 
-int main(void)
+static int setup_ssl(const char *ssl_dir, const char **err)
 {
+    char *cert_file = NULL;
+    char *key_file = NULL;
+
+    SSL_load_error_strings();
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+
+    accept_ctx.ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    SSL_CTX_set_options(accept_ctx.ssl_ctx, SSL_OP_NO_SSLv2);
+
+#define CERT_FILE "server.crt"
+#define KEY_FILE "server.key"
+    asprintf(&cert_file, "%s/%s", ssl_dir, CERT_FILE);
+    asprintf(&key_file, "%s/%s", ssl_dir, KEY_FILE);
+    /* load certificate and private key */
+    if (SSL_CTX_use_certificate_file(accept_ctx.ssl_ctx, cert_file, SSL_FILETYPE_PEM) != 1) {
+        *err = "an error occurred while trying to load server certificate file " CERT_FILE "\n";
+        return -1;
+    }
+    if (SSL_CTX_use_PrivateKey_file(accept_ctx.ssl_ctx, key_file, SSL_FILETYPE_PEM) != 1) {
+        *err = "an error occurred while trying to load private key file " KEY_FILE "\n";
+        return -1;
+    }
+
+/* setup protocol negotiation methods */
+#if H2O_USE_NPN
+    h2o_ssl_register_npn_protocols(accept_ctx.ssl_ctx, h2o_http2_npn_protocols);
+#endif
+#if H2O_USE_ALPN
+    h2o_ssl_register_alpn_protocols(accept_ctx.ssl_ctx, h2o_http2_alpn_protocols);
+#endif
+
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+  unsigned short port = 8080;
+  const char *ssl_dir = NULL;
   h2o_hostconf_t *hostconf;
 
+  if (argc > 1) {
+    port = atoi(argv[1]);
+  }
+  if (argc > 2) {
+    ssl_dir = argv[2];
+  }
 
   signal(SIGPIPE, SIG_IGN);
 
@@ -133,8 +178,15 @@ int main(void)
   accept_ctx.ctx = &ctx;
   accept_ctx.hosts = config.hosts;
 
-  if (create_listener() != 0) {
-    fprintf(stderr, "failed to listen to 127.0.0.1:7890:%s\n", strerror(errno));
+  if (ssl_dir) {
+    const char *err = NULL;
+    if (setup_ssl(ssl_dir, &err) != 0) {
+      fprintf(stderr, "Failed to setup SSL: %s\n", err);
+      exit(1);
+    }
+  }
+  if (create_listener(port) != 0) {
+    fprintf(stderr, "failed to listen to 127.0.0.1:%d:%s\n", port, strerror(errno));
     exit(1);
   }
 
