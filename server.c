@@ -4,6 +4,24 @@
 #include <h2o.h>
 
 
+static int on_req_big(h2o_handler_t *self, h2o_req_t *req)
+{
+  static h2o_generator_t generator = {};
+#define BIGLEN (100*1024)
+  static char buf[BIGLEN];
+  static h2o_iovec_t body = {buf, BIGLEN};
+  if (!h2o_memis(req->method.base, req->method.len, H2O_STRLIT("GET"))) {
+    return -1;
+  }
+  memset(buf, 'a', sizeof(buf));
+  req->res.status = 200;
+  req->res.reason = "OK";
+  h2o_add_header(&req->pool, &req->res.headers, H2O_TOKEN_CONTENT_TYPE, H2O_STRLIT("text/plain"));
+  h2o_start_response(req, &generator);
+  h2o_send(req, &body, 1, 1);
+  return 0;
+}
+
 static int on_req(h2o_handler_t *self, h2o_req_t *req)
 {
   static h2o_generator_t generator = {};
@@ -163,6 +181,10 @@ int main(int argc, char **argv)
 
   h2o_config_init(&config);
   hostconf = h2o_config_register_host(&config, h2o_iovec_init(H2O_STRLIT("default")), 65535);
+
+  h2o_pathconf_t *pathconf_big = h2o_config_register_path(hostconf, "/big", 0);
+  h2o_handler_t *handler_big = h2o_create_handler(pathconf_big, sizeof(*handler_big));
+  handler_big->on_req = on_req_big;
 
   h2o_pathconf_t *pathconf = h2o_config_register_path(hostconf, "/", 0);
   h2o_handler_t *handler = h2o_create_handler(pathconf, sizeof(*handler));
