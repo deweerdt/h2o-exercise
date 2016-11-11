@@ -37,6 +37,7 @@ h2o server:
   - Add a 'Link: preload' header
 
 - h2get:
+  - cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl/1.0.2j/ .
   - the SETTINGS frame, try to obtain a GOAWAY
   - Send an wrong stream id -- use getp
   - Implement PING (https://www.google.com sends PING)
