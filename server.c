@@ -13,7 +13,7 @@ static int on_req(h2o_handler_t *self, h2o_req_t *req)
   }
   req->res.status = 200;
   req->res.reason = "OK";
-  h2o_add_header(&req->pool, &req->res.headers, H2O_TOKEN_CONTENT_TYPE, H2O_STRLIT("text/plain"));
+  h2o_add_header(&req->pool, &req->res.headers, H2O_TOKEN_CONTENT_TYPE, NULL, H2O_STRLIT("text/plain"));
   h2o_start_response(req, &generator);
   h2o_send(req, &body, 1, 1);
   return 0;
@@ -41,7 +41,7 @@ static void on_accept(uv_stream_t *listener, int status)
     return;
   }
 
-  sock = h2o_uv_socket_create((uv_stream_t *)conn, (uv_close_cb)free);
+  sock = h2o_uv_socket_create((uv_handle_t *)conn, (uv_close_cb)free);
   h2o_accept(&accept_ctx, sock);
 }
 
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
   h2o_context_init(&ctx, h2o_evloop_create(), &config);
 #endif
 
-  h2o_access_log_register(pathconf, h2o_access_log_open_handle("/dev/stdout", NULL));
+  h2o_access_log_register(pathconf, h2o_access_log_open_handle("/dev/stdout", NULL, 1));
 
   accept_ctx.ctx = &ctx;
   accept_ctx.hosts = config.hosts;

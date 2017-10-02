@@ -10,8 +10,8 @@ ifeq ($(UNAME_S),Linux)
   LDFLAGS += "-lpthread"
 endif
 ifeq ($(UNAME_S),Darwin)
-  SSL_CFLAGS=$(shell PKG_CONFIG_PATH="$(shell brew --prefix openssl)/lib/pkgconfig" pkg-config --cflags libssl)
-  SSL_LIBS=$(shell PKG_CONFIG_PATH="$(shell brew --prefix openssl)/lib/pkgconfig" pkg-config --libs libssl)
+  SSL_CFLAGS=$(shell PKG_CONFIG_PATH="$(shell brew --prefix openssl@1.1)/lib/pkgconfig" pkg-config --cflags libssl)
+  SSL_LIBS=$(shell PKG_CONFIG_PATH="$(shell brew --prefix openssl@1.1)/lib/pkgconfig" pkg-config --libs libssl)
   LDFLAGS += "-luv"
   LDFLAGS += $(shell pkg-config --libs libh2o)
   CFLAGS += $(shell pkg-config --cflags libh2o)
