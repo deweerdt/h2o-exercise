@@ -22,10 +22,11 @@
     - wireshark
 
 
-h2o server:
+h2o server from server.c:
   - install and compile h2o:
     - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.0f/ .`
     - make -j 4 && make install
+  - Build the sample server in this directory: `make`
   - Add a handler that sends a JS file
   Make that JS of variable size, denpending on an URL parameter, use
   `h2o_req_t` to find the path of the request .
