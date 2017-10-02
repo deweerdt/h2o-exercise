@@ -24,7 +24,7 @@
 
 h2o server:
   - install and compile h2o:
-    - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl/1.0.2l/ .`
+    - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.0f/ .`
     - make -j 4 && make install
   - Add a handler that sends a JS file
   Make that JS of variable size, denpending on an URL parameter, use
@@ -37,7 +37,7 @@ h2o server:
   - See the upcoming `critical` keyword: https://github.com/h2o/h2o/pull/1436
 
 - h2get:
-  - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl/1.0.2l/ .`
+  - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.0f .`
   - the SETTINGS frame, try to obtain a GOAWAY
   - Send an wrong stream id -- use `send_headers`
   - Implement PING (https://www.google.com or https://www.fastly.com respond to PING)
