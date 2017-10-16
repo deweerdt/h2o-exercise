@@ -1,3 +1,20 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Needed software](#needed-software)
+- [The observation track](#the-observation-track)
+  - [With Chrome](#with-chrome)
+  - [With Firefox](#with-firefox)
+- [The low-level client track](#the-low-level-client-track)
+  - [Establishing a connection](#establishing-a-connection)
+  - [GOAWAY frames](#goaway-frames)
+  - [PING frames](#ping-frames)
+  - [HPACK](#hpack)
+- [The server track](#the-server-track)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Needed software
 
   - git clone git@github.com:deweerdt/h2o-exercise.git
