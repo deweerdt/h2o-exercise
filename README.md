@@ -1,4 +1,5 @@
-- Install:
+# Needed software
+
   - git clone git@github.com:deweerdt/h2o-exercise.git
   - git clone git@github.com:h2o/h2o.git
   - git clone git@github.com:deweerdt/h2get.git
@@ -11,37 +12,89 @@
   - openssl
   - libuv (macosx only)
 
-- Observe https://seekingalpha.com/
-  - With Firefox
-  - Find the pushes
-  - With Chrome
-  - Find the pushes
-  - Use wireshark (https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Key_Log_Format):
-    - export SSLKEYLOGFILE=$HOME/sslkeylogs/keylog.log
-    - /Applications/Firefox.app/Contents/MacOS/firefox &
-    - wireshark
+# The observation track
 
+## With Chrome
 
-h2o server from server.c:
-  - install and compile h2o:
-    - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.0f/ .`
-    - make -j 4 && make install
-  - Build the sample server in this directory: `make`
-  - Add a handler that sends a JS file
+Using chrome://net-internals#http2 . Note that you can use "Flush
+Sockets" in the upper right corner to force Chrome to re-establish
+an HTTP/2 connection.
+
+- Observe connection coalescing:
+  - https://www.vox.com
+  - Verify that they share the same IP:
+    ```
+    dig cdn.vox-cdn.com
+    dig fonts.voxmedia.com
+    ```
+  - Check the SAN:
+    `openssl s_client -connect fonts.voxmedia.com:443 2>&1 | openssl x509 -text | grep -A1 'Subject Alternative Name'`
+- Observer pushes
+  - https://seekingalpha.com/
+  - find `HTTP2_SESSION_RECV_PUSH_PROMISE`
+  - observe how H2O replicated some of the headers for the request that originated the push
+
+## With Firefox
+- Use wireshark (https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Key_Log_Format):
+  ```
+  $ export SSLKEYLOGFILE=$HOME/sslkeylogs/keylog.log
+  $ /Applications/Firefox.app/Contents/MacOS/firefox &
+  $ wireshark
+  ```
+- Observe how Firefox sends PRIORITY frames and then attaches requests to them
+
+# The low-level client track
+
+Build h2get:
+- `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.0f .`
+
+`h2get` embeds a Ruby interpreter, it can be used as following: `./h2get script.rb`
+
+## Establishing a connection
+
+- Dump the different settings that different servers send:
+  - www.fastly.com
+  - www.google.com
+  - www.facebook.com
+
+## GOAWAY frames
+
+> An endpoint that encounters a connection error SHOULD first send a
+> GOAWAY frame (Section 6.8) with the stream identifier of the last
+> stream that it successfully received from its peer
+
+- Send invalid values in the SETTINGS frame in order to obtain a
+response from the server (search for `PROTOCOL_ERROR` in the RFC)
+- Send an invalid stream id -- use `send_headers`
+
+## PING frames
+
+Have a client sending send PING frames (https://www.google.com or
+https://www.fastly.com respond to PING)
+
+## HPACK
+
+Implement `decode_int` https://tools.ietf.org/html/rfc7541#section-5.1
+
+Checkout the `no-decode-int` branch, use `./test_decode_int` to check the implementation.
+
+# The server track
+
+This assumes that you've built and installed h2o. This repository
+comes with a small C server that uses libh2o that we will customize.
+- install and compile h2o:
+  - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.0f/ .`
+  - make -j 4 && make install
+- Build the sample server in this directory:
+  - `make`
+- Add a handler that sends a JS file
   Make that JS of variable size, denpending on an URL parameter, use
   `h2o_req_t` to find the path of the request .
-  - Add a handler that sends a CSS file
+- Add a handler that sends a CSS file
   Make this of variable size
-  - Add a handler that sends an HTML file
+- Add a handler that sends an HTML file
   Reference the js and css, multiple times
-  - Add a 'Link: preload' header
+- Add a 'Link: preload' header
   - See the upcoming `critical` keyword: https://github.com/h2o/h2o/pull/1436
 
-- h2get:
-  - `cmake -DOPENSSL_ROOT_DIR=/usr/local/Cellar/openssl@1.1/1.1.0f .`
-  - the SETTINGS frame, try to obtain a GOAWAY
-  - Send an wrong stream id -- use `send_headers`
-  - Implement PING (https://www.google.com or https://www.fastly.com respond to PING)
-  - Implement decode_int https://tools.ietf.org/html/rfc7541#section-5.1
-    github.com/deweerdt/h2get -- no-decode-int
-    
+   
