@@ -1,0 +1,42 @@
+From d6da84c934b3bc143480f162042443afb95258f6 Mon Sep 17 00:00:00 2001
+From: Frederik Deweerdt <frederik.deweerdt@gmail.com>
+Date: Tue, 17 Oct 2017 14:51:54 +0200
+Subject: [PATCH] Output priorities
+
+---
+ lib/http2/connection.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/lib/http2/connection.c b/lib/http2/connection.c
+index ad988da8..e19c9dc8 100644
+--- a/lib/http2/connection.c
++++ b/lib/http2/connection.c
+@@ -420,6 +420,9 @@ static int handle_incoming_request(h2o_http2_conn_t *conn, h2o_http2_stream_t *s
+         return ret;
+     }
+ 
++    fprintf(stderr, "stream_id: %u, path: %.*s\n", stream->stream_id,
++                                                   (int)stream->req.input.path.len,
++                                                   stream->req.input.path.base);
+ #define EXPECTED_MAP                                                                                                               \
+     (H2O_HPACK_PARSE_HEADERS_METHOD_EXISTS | H2O_HPACK_PARSE_HEADERS_PATH_EXISTS | H2O_HPACK_PARSE_HEADERS_SCHEME_EXISTS)
+     if ((header_exists_map & EXPECTED_MAP) != EXPECTED_MAP) {
+@@ -661,6 +664,7 @@ static int handle_headers_frame(h2o_http2_conn_t *conn, h2o_http2_frame_t *frame
+     /* decode */
+     if ((ret = h2o_http2_decode_headers_payload(&payload, frame, err_desc)) != 0)
+         return ret;
++    fprintf(stderr, "HEADERS (%u): dep: %d, weight: %d, excl: %d\n", frame->stream_id, (int)payload.priority.dependency, (int)payload.priority.weight, (int)payload.priority.exclusive);
+     if ((frame->stream_id & 1) == 0) {
+         *err_desc = "invalid stream id in HEADERS frame";
+         return H2O_HTTP2_ERROR_PROTOCOL;
+@@ -732,6 +736,7 @@ static int handle_priority_frame(h2o_http2_conn_t *conn, h2o_http2_frame_t *fram
+ 
+     if ((ret = h2o_http2_decode_priority_payload(&payload, frame, err_desc)) != 0)
+         return ret;
++    fprintf(stderr, "PRIORITY (%u): dep: %d, weight: %d, excl: %d\n", frame->stream_id, (int)payload.dependency, (int)payload.weight, (int)payload.exclusive);
+     if (frame->stream_id == payload.dependency) {
+         *err_desc = "stream cannot depend on itself";
+         return H2O_HTTP2_ERROR_PROTOCOL;
+-- 
+2.11.0
+
