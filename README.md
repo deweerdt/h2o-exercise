@@ -12,6 +12,8 @@
   - [PING frames](#ping-frames)
   - [HPACK](#hpack)
 - [The server track](#the-server-track)
+  - [H2O frame handling](#h2o-frame-handling)
+  - [Using H2O as a library](#using-h2o-as-a-library)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
