@@ -97,6 +97,22 @@ Checkout the `no-decode-int` branch, use `./test_decode_int` to check the implem
 
 # The server track
 
+## H2O frame handling
+
+H2O core frame handling function is
+`lib/http2/connection.c::expect_default`. This function
+dispatches the received frame depending on its type. Apply
+`0001-Output-priorities.patch` in order to have priority information
+about the requests output to stderr.
+
+Following the same model, instrument `handle_window_update_frame`
+in order to understand how browsers send `WINDOW_UPDATE` frames.
+
+`www/` has a directory that can be used as a root directory to serve
+different type of contents.
+
+## Using H2O as a library
+
 This assumes that you've built and installed h2o. This repository
 comes with a small C server that uses libh2o that we will customize.
 - install and compile h2o:
