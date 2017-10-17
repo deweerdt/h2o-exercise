@@ -56,6 +56,7 @@ an HTTP/2 connection.
 ## With Firefox
 - Use wireshark (https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Key_Log_Format):
   ```
+  $ mkdir $HOME/sslkeylogs/
   $ export SSLKEYLOGFILE=$HOME/sslkeylogs/keylog.log
   $ /Applications/Firefox.app/Contents/MacOS/firefox &
   $ wireshark
@@ -77,6 +78,9 @@ Build h2get:
   - www.facebook.com
 
 ## GOAWAY frames
+
+From RFC 7540, 5.4.1. Connection Error Handling
+(https://tools.ietf.org/html/rfc7540#section-5.4.1)
 
 > An endpoint that encounters a connection error SHOULD first send a
 > GOAWAY frame (Section 6.8) with the stream identifier of the last
